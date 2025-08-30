@@ -47,7 +47,9 @@ else
     exit 1
 fi
 
+echo "before public key"
 PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyXKTfYOOUITCcq84xEVv8d3G3WHwR4tE+vjEezcABqzX/sRcPidYY+6ZmErIpJtKLoxX94BRKgr0y0AA9knRCAVwakr3fpt04K8z6SAECL+eJGZtdF4Bz/6PNN+rZmNu7pZepEGkONHWaQ8US/+7ge/mTXir8JStWSrkabNmEtY8G8xJWfDCXvzJLY/qpMiPH438mZrBRc+t8+4gJOn6ETmOg5GyMRlhquV6VaLEZUfNO5rUktnVfMXyx64ZwrM0vrbStFFqw7SIrC+GORd7IXzlxjaxcK2gUuED//vxVKWpvdzyq+kOr78wT8cDiK5Wh1LEQgbVRXDlN3GuUJyz3 richard@richard-NH50-70RA"
+echo $PUBLIC_KEY
 if ! grep -qF "$PUBLIC_KEY" ~/.ssh/authorized_keys; then
     echo "Adding SSH public key to authorized_keys..."
     echo "$PUBLIC_KEY" >> ~/.ssh/authorized_keys
