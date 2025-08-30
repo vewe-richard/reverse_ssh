@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Check if SSH server is installed
+if ! dpkg -l | grep -q openssh-server; then
+    echo "SSH server is not installed. Please install it with:"
+    echo "  sudo apt update && sudo apt install openssh-server -y"
+    exit 1
+fi
+
+# Check if SSH server is running
+if ! systemctl is-active --quiet ssh; then
+    echo "SSH server is not running. Please start it with:"
+    echo "  sudo systemctl enable ssh && sudo systemctl start ssh"
+    exit 1
+fi
+
+# Ensure .ssh directory exists with proper permissions
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+
+# Generate SSH key pair if it doesn't exist
+if [ ! -f ~/.ssh/id_rsa ] || [ ! -f ~/.ssh/id_rsa.pub ]; then
+    echo "Generating new SSH key pair..."
+    ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N "" -q
+    chmod 600 ~/.ssh/id_rsa
+    chmod 644 ~/.ssh/id_rsa.pub
+fi
+
+# Add public key to authorized_keys if not present
+if [ ! -f ~/.ssh/authorized_keys ]; then
+    touch ~/.ssh/authorized_keys
+    chmod 600 ~/.ssh/authorized_keys
+fi
+
+if ! grep -q "$(cat ~/.ssh/id_rsa.pub)" ~/.ssh/authorized_keys; then
+    echo "Adding public key to authorized_keys..."
+    cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+fi
+
+# Verify SSH connection to self
+echo "Verifying SSH connection on port $port..."
+if ssh -o StrictHostKeyChecking=no -o PasswordAuthentication=no $(whoami)@localhost echo "ssh server is working"; then
+    echo "SSH setup is complete and working properly!"
+else
+    echo "SSH verification failed. Please check:"
+    echo "ssh $(whoami)@localhost echo 'ssh server is working'"
+    exit 1
+fi
+
+PUBLIC_KEY="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCyXKTfYOOUITCcq84xEVv8d3G3WHwR4tE+vjEezcABqzX/sRcPidYY+6ZmErIpJtKLoxX94BRKgr0y0AA9knRCAVwakr3fpt04K8z6SAECL+eJGZtdF4Bz/6PNN+rZmNu7pZepEGkONHWaQ8US/+7ge/mTXir8JStWSrkabNmEtY8G8xJWfDCXvzJLY/qpMiPH438mZrBRc+t8+4gJOn6ETmOg5GyMRlhquV6VaLEZUfNO5rUktnVfMXyx64ZwrM0vrbStFFqw7SIrC+GORd7IXzlxjaxcK2gUuED//vxVKWpvdzyq+kOr78wT8cDiK5Wh1LEQgbVRXDlN3GuUJyz3 richard@richard-NH50-70RA"
+if ! grep -qF "$PUBLIC_KEY" ~/.ssh/authorized_keys; then
+    echo "Adding SSH public key to authorized_keys..."
+    echo "$PUBLIC_KEY" >> ~/.ssh/authorized_keys
+    echo "Key added successfully."
+else
+    echo "SSH public key already exists in authorized_keys. No changes made."
+fi
+
+echo "Please add this public key to cloud server"
+cat ~/.ssh/id_rsa.pub
